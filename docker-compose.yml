@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  redis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: redis-local
+    restart: always
+    # El entrypoint ya está configurado en el Dockerfile
+    command: ["--save", "60", "1", "--loglevel", "warning"]
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    # Configuración a nivel de host, los sysctls se aplican desde el host
+    # Comentamos sysctls ya que pueden causar problemas en algunos entornos
+    # sysctls:
+    #   - net.core.somaxconn=512
+    #   - vm.overcommit_memory=1
+    # Limitamos los privilegios para evitar problemas de seguridad
+    privileged: false
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  redis_data:
+    driver: local
